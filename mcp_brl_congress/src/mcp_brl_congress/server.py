@@ -102,10 +102,4 @@ async def getSenatorProfile(
     return "\n".join(profile_parts)
 
 
-def main():
-    try:
-        print("Iniciando servidor MCP...", file=sys.stderr)
-        mcp.run(transport="stdio")
-    except Exception as e:
-        print(f"Erro: {e}", file=sys.stderr)
-        raise
+__all__ = ["mcp"]
