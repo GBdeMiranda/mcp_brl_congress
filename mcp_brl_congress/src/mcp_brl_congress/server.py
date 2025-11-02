@@ -1,14 +1,8 @@
-import asyncio
-from typing import Any, Iterator
+import sys
 
 from mcp.server.fastmcp import FastMCP
 
-from mcp_brl_congress.utils import (
-    make_request,
-    fetch_document_content,
-    extract_text_from_pdf,
-)
-from mcp_brl_congress.infrastructure import senate_client
+from mcp_brl_congress.utils import make_request
 
 
 mcp = FastMCP("senate")
@@ -16,57 +10,7 @@ mcp = FastMCP("senate")
 API_BASE_URL = "https://legis.senado.leg.br/dadosabertos"
 
 
-def _find_document_urls(data: Any) -> Iterator[str]:
-    """Recursively find all 'UrlDocumento' values in the nested JSON response."""
-    if isinstance(data, dict):
-        for key, value in data.items():
-            if key == "urlDocumento" and isinstance(value, str):
-                yield value
-            else:
-                yield from _find_document_urls(value)
-    elif isinstance(data, list):
-        for item in data:
-            yield from _find_document_urls(item)
-
-
-@mcp.tool()
-async def getBillText(number: str, year: str) -> str:
-    """
-    Get the text of a legislative bill from the Brazilian Senate.
-
-    Args:
-        number: The number of the bill.
-        year: The year of the bill.
-    """
-
-    # -----------------------------------------------------
-    process_url = f"{API_BASE_URL}/processo.json?numero={number}&ano={year}"
-    process_data = await make_request(process_url)
-
-    if not process_data:
-        return f"Could not find a legislative process for bill {number}/{year}."
-
-    # -----------------------------------------------------
-    doc_urls = list(_find_document_urls(process_data))
-    if not doc_urls:
-        return "Found the legislative process, but it has no associated documents."
-
-    # -----------------------------------------------------
-    # Fetch and extract text from each document
-    all_extracted_text = []
-    for doc_url in doc_urls:
-        pdf_bytes = await fetch_document_content(doc_url)
-        if pdf_bytes:
-            extracted_text = extract_text_from_pdf(pdf_bytes)
-            if extracted_text:
-                all_extracted_text.append(extracted_text)
-
-    if not all_extracted_text:
-        return "Found documents, but could not extract any text. They may be empty or image-based."
-
-    return "\n\n--- (New Document) ---\n\n".join(all_extracted_text)
-
-
+# TODO: refactor this into new architecture
 @mcp.tool()
 async def getSenatorProfile(
     name: str, startDate: str | None = None, endDate: str | None = None
@@ -158,23 +102,10 @@ async def getSenatorProfile(
     return "\n".join(profile_parts)
 
 
-async def main() -> None:
-    client = senate_client.client.HttpxSenateClient()
-    async with client:
-        resp = await client.fetch_processes_by_number_and_year(
-            number="680", year="2024"
-        )
-        print(resp)
-
-
-# def main():
-#     try:
-#         print("Iniciando servidor MCP...", file=sys.stderr)
-#         mcp.run(transport="stdio")
-#     except Exception as e:
-#         print(f"Erro: {e}", file=sys.stderr)
-#         raise
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
+def main():
+    try:
+        print("Iniciando servidor MCP...", file=sys.stderr)
+        mcp.run(transport="stdio")
+    except Exception as e:
+        print(f"Erro: {e}", file=sys.stderr)
+        raise
