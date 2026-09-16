@@ -1,5 +1,5 @@
 [project]
-name = "mcp_brl_congress"
+name = "radar_parlamentar_mcp"
 version = "0.1.0"
 description = "MCP Server for Brazilian National Congress"
 readme = "README.md"
@@ -15,4 +15,4 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project.scripts]
-mcp_brl_congress = "mcp_brl_congress.mcp_server:main"
+radar_parlamentar_mcp = "radar_parlamentar_mcp.mcp_server:main"
