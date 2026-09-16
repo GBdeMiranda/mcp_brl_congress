@@ -4,6 +4,10 @@ import urllib.parse
 from mcp.server.fastmcp import FastMCP
 
 from .utils import make_request, fetch_document_content, extract_text_from_pdf
+from .transparency import get_parliamentarian_expenses
+from .activity import get_parliamentarian_activity, get_parliamentarian_votes
+from .evaluation import evaluate_parliamentarian
+from .themes import search_congressional_themes
 
 mcp = FastMCP("senate")
 
@@ -194,9 +198,12 @@ async def getParliamentarianProfile(
 
 
 @mcp.tool()
-async def searchBills(keyword: str = "", year: int | None = None, limit: int = 10) -> str:
+async def searchLegislativeProposals(keyword: str = "", year: int | None = None, limit: int = 10) -> str:
     """
-    Search for legislative bills and proposals in the Brazilian Senate.
+    Search for specific legislative bills and proposals in the Brazilian Congress by exact keyword or number.
+    
+    Use this tool when you need to find a specific bill (e.g., 'PL 2630/2020') or bills explicitly containing a keyword in their summary.
+    If you want a broad, cross-cutting report about a public policy area (including speeches and hearings), use searchCongressionalThemes instead.
 
     Args:
         keyword: Keyword to search in the bill's title, subject, or summary (e.g., 'inteligência artificial').
@@ -250,6 +257,115 @@ async def getBillText(number: str, year: str) -> str:
         "url": doc_url,
         "texto": text,
     }
+    return json.dumps(result, ensure_ascii=False, indent=2)
+
+
+@mcp.tool()
+async def getParliamentarianExpenses(
+    name: str,
+    house: str = "auto",
+    year: int | None = None,
+    month: int | None = None,
+    limit: int = 15,
+) -> str:
+    """
+    Get itemized and aggregated CEAP expenses for a Brazilian parliamentarian.
+
+    Args:
+        name: Name of the parliamentarian (e.g., 'Arthur Lira', 'Flávio Bolsonaro').
+        house: Legislative house to search. Options: 'auto', 'senado', or 'camara'. Default: 'auto'.
+        year: Reference calendar year (e.g., 2024). Defaults to the latest available year.
+        month: Reference month (1 to 12).
+        limit: Maximum number of itemized expense receipts to return (default: 15).
+    """
+    result = await get_parliamentarian_expenses(name, house=house, year=year, month=month, limit=limit)
+    return json.dumps(result, ensure_ascii=False, indent=2)
+
+
+@mcp.tool()
+async def getParliamentarianActivity(
+    name: str,
+    house: str = "auto",
+    startDate: str | None = None,
+    endDate: str | None = None,
+    limit: int = 20,
+) -> str:
+    """
+    Get parliamentary attendance, plenary sessions, committee hearings, or speeches.
+
+    Args:
+        name: Name of the parliamentarian.
+        house: Legislative house to search. Options: 'auto', 'senado', or 'camara'. Default: 'auto'.
+        startDate: Filter starting date in YYYY-MM-DD format.
+        endDate: Filter ending date in YYYY-MM-DD format.
+        limit: Maximum number of events or speeches to return (default: 20).
+    """
+    result = await get_parliamentarian_activity(
+        name, house=house, start_date=startDate, end_date=endDate, limit=limit
+    )
+    return json.dumps(result, ensure_ascii=False, indent=2)
+
+
+@mcp.tool()
+async def getParliamentarianVotes(
+    name: str,
+    house: str = "auto",
+    limit: int = 15,
+    year: int | None = None,
+) -> str:
+    """
+    Get nominal roll-call voting records and positions for a Brazilian parliamentarian.
+
+    Args:
+        name: Name of the parliamentarian.
+        house: Legislative house to search. Options: 'auto', 'senado', or 'camara'. Default: 'auto'.
+        limit: Maximum number of voting records to return (default: 15).
+        year: Year filter for voting records.
+    """
+    result = await get_parliamentarian_votes(name, house=house, limit=limit, year=year)
+    return json.dumps(result, ensure_ascii=False, indent=2)
+
+
+@mcp.tool()
+async def evaluateParliamentarian(
+    name: str,
+    house: str = "auto",
+    year: int | None = None,
+) -> str:
+    """
+    Consolidate biographical data, CEAP expenses, institutional activity, and voting records into a qualitative evaluation.
+
+    Args:
+        name: Name of the parliamentarian.
+        house: Legislative house to search. Options: 'auto', 'senado', or 'camara'. Default: 'auto'.
+        year: Reference year for expenditure and activity analysis.
+    """
+    result = await evaluate_parliamentarian(name, house=house, year=year)
+    return json.dumps(result, ensure_ascii=False, indent=2)
+
+
+@mcp.tool()
+async def searchCongressionalThemes(
+    theme: str,
+    house: str = "auto",
+    limit: int = 5,
+    year: int | None = None,
+) -> str:
+    """
+    Synthesize congressional activity surrounding a broad public policy topic (e.g., Sovereignty, Economy).
+
+    Consolidates recent legislative bills, plenary speeches, public hearings,
+    committee agendas, and roll-call votes into a cross-cutting thematic report.
+    Use this tool to get a macro-level diagnostic of how Congress is handling a specific agenda.
+    If you only need to find a specific bill, use searchLegislativeProposals instead.
+
+    Args:
+        theme: Public policy topic or keyword (e.g., 'inteligência artificial', 'reforma tributária', 'transição energética').
+        house: Legislative house to search. Options: 'auto', 'senado', or 'camara'. Default: 'auto'.
+        limit: Maximum number of records per category (default: 5).
+        year: Year filter for legislative proposals.
+    """
+    result = await search_congressional_themes(theme, house=house, limit=limit, year=year)
     return json.dumps(result, ensure_ascii=False, indent=2)
 
 

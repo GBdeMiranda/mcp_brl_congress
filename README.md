@@ -51,6 +51,23 @@ The server registers the following MCP tools (all returning structured JSON):
 3. **`getBillText(number, year)`**:
    - Retrieves the metadata, status, primary document URL, and extracted text of a legislative bill (e.g., number `"2630"`, year `"2020"`). Automatically prioritizes the primary bill proposition and caps text size safely to avoid context overflow.
 
+4. **`getParliamentarianExpenses(name, house, year, month, limit)`**:
+   - Retrieves itemized and aggregated CEAP (parliamentary quota) expenditures.
+   - Calculates total spending, categorical breakdown (airfare, housing, publicity, advisory), and top supplier receipts.
+
+5. **`getParliamentarianActivity(name, house, startDate, endDate, limit)`**:
+   - Retrieves institutional activity records including plenary sessions, committee deliberations, public hearings, and floor speeches.
+
+6. **`getParliamentarianVotes(name, house, limit, year)`**:
+   - Retrieves nominal roll-call voting records, detailing bill subjects and the legislator's specific vote positions (`Sim`, `Não`, `Abstenção`, `Obstrução`).
+
+7. **`evaluateParliamentarian(name, house, year)`**:
+   - Consolidates biographical data, CEAP expenses, committee assignments, authored proposals, institutional attendance, and roll-call votes into an objective qualitative evaluation dossier.
+
+8. **`searchCongressionalThemes(theme, house, limit, year)`**:
+   - Synthesizes congressional activity surrounding a public policy topic into a consolidated bicameral overview.
+   - Aggregates relevant bills, floor speeches, public hearings, committee deliberations, and recent roll-call votes alongside an executive summary.
+
 ## API Details
 
 - **Federal Senate**: `https://legis.senado.leg.br/dadosabertos`
